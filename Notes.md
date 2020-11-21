@@ -90,3 +90,28 @@ eureka.instance.instance-id=${spring.application.name}:${spring.application.inst
 now with above configurations , same ms will get registered with different isntance id in eureka server.
 
 
+mvn spring-boot:run -Dspring-boot.run.arguments=--spring.application.instance_id=sergey    -> 
+by this ms will start with supplied argument name 'sergey'
+
+mvn spring-boot:run -Dspring-boot.run.arguments=--spring.application.instance_id=sergey2,--server.port=8999 ->
+by this ms wills tart with supplied argument name 'sergey2' and with port 8999
+
+
+6.  To see the currently used port by MS, use Environment object
+
+@restcontorller
+@reaquestmapping("/users")
+public class Userscontrollere {
+    
+    @Autowired
+    private Environment env;
+    
+    @GetMapping("/status/check")
+    public sting status(){
+      return "working on port " + env.getProperty("local.server.port");
+    }
+
+}
+
+
+
