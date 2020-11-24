@@ -132,6 +132,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
   protected void configure(HttpSecurity http) throws Exception {
     http.csrf().disable();
     http.authorizedRequests().antMatches("users/**").permitAll();
+    http.headers().frameOptions().disable();
     
   }
 }
@@ -139,4 +140,67 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
 with csrf , we prevent the attack on web app.
 with /users/** its going to allow request matching these urls 
 
+
+8. password encoder
+BCryptPasswordEncoder 
+```
+@springbootapplication
+@EnableDiscoveryClient
+public class App {
+  psvm() {
+    springapplication.run(App.class, args);
+  }
+  
+  @Bean
+  public BCryptPasswordEncoder bCryptPasswordEncoder() {
+   return new BCryptPasswordEncoder();
+  }
+}
+
+@Service
+public class UsersServiceImpl implements UsersService {
+      UsersRepository usersRepository;
+      BCryptPasswordEncoder bCryptPasswordEncoder;
+      
+      @Autowired
+      public UsersServiceImpl(UsersRepository usersRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+          this.usersRepository=usersRepository;
+          this.bCryptPasswordEncoder=bCryptPasswordEncoder;
+      }
+      
+      use like this -> bCryptPasswordEncoder.encode(requestBean.getPassword()) -> gonna encode the password
+}
+```
+
+9. allow IP address of only zuul api gateway
+
+```
+application.properties
+server.port=0 #for making sure that user ms will get random port while running and registrteing on eureka server
+spring.application.name=users-ws
+eureka.client.serviceUrl.defaultZone=http://localhost:8010/eureka
+spring.devtools.restart.enabled=true
+gateway-ip=192.168.2.81
+```
+```
+@Configuration
+@EnableWebSecurity
+public class WebSecurity extends WebSecurityConfigurerAdapter {
+
+  private Environment environment;
+  
+  @Autowired
+  public WebSecurity(Environment environment) {
+    this.environment=environment;
+  }
+  
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http.csrf().disable();
+    http.authorizedRequests().antMatchers("/**").hasIpAddress(environment.getProperty("gateway-ip"));
+    http.headers().frameOptions().disable();
+    
+  }
+}
+```
 
