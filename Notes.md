@@ -204,3 +204,13 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
 }
 ```
 
+10. loginrequestmodel
+```
+public class LoginRequestModel {
+
+string email
+string passsword;
+//getter setter
+
+}
+```
