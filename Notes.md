@@ -118,3 +118,25 @@ public class Userscontrollere {
 ```
 
 
+7. security in springboot
+
+dependency:
+spring-boot-starter-security
+
+```
+@Configuration
+@EnableWebSecurity
+public class WebSecurity extends WebSecurityConfigurerAdapter {
+
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http.csrf().disable();
+    http.authorizedRequests().antMatches("users/**").permitAll();
+    
+  }
+}
+```
+with csrf , we prevent the attack on web app.
+with /users/** its going to allow request matching these urls 
+
+
