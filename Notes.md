@@ -214,3 +214,94 @@ string passsword;
 
 }
 ```
+
+11. AuthenticationFilter class for authenticating the credentials
+```
+@Override
+public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+
+    try {
+      LoginRequestModel creds = new ObjectMapper().readValue(req.getInputStream(), LoginRequestModel.class);
+      return getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(
+                                                                                              creds.getEmail(),
+                                                                                              creds.getPassword(),
+                                                                                              new ArrayList<>()));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+}
+
+@Override
+public void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain, Authentication auth) 
+      throws IOException, ServletException {
+      
+}
+```
+```
+application.properties
+server.port=0 #for making sure that user ms will get random port while running and registrteing on eureka server
+spring.application.name=users-ws
+eureka.client.serviceUrl.defaultZone=http://localhost:8010/eureka
+spring.devtools.restart.enabled=true
+gateway-ip=192.168.2.81
+```
+```
+@Configuration
+@EnableWebSecurity
+public class WebSecurity extends WebSecurityConfigurerAdapter {
+
+  private Environment environment;
+  private UsersService usersService;
+  private BCryptPasswordEncoder bCryptPasswordEncoder;
+  
+  @Autowired
+  public WebSecurity(Environment environment) {
+    this.environment=environment;
+  }
+  
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http.csrf().disable();
+    http.authorizedRequests().antMatchers("/**").hasIpAddress(environment.getProperty("gateway-ip"))
+    .and()
+    .addFilter(getAuthenticationFilter()); //getAuthenticationFilter its from spring not custom method
+    http.headers().frameOptions().disable();
+    
+  }
+  
+  private AuthenticationFilter getAuthenticationFilter() throws Exception {
+      AuthenticationFilter authenticationFilter = new AuthenticationFilter();
+      authenticationFilter.setAuthenticationManager(authenticationFilter());
+      return authenticationFilter();
+  
+  }
+  
+  @Override
+  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+      auth.userDetailsService(usersService).passwordEncoder(bCryptPasswordEncoder);
+  }
+  
+}
+
+@Service
+public class UsersServiceImpl implements UsersService {
+      UsersRepository usersRepository;
+      BCryptPasswordEncoder bCryptPasswordEncoder;
+      
+      @Autowired
+      public UsersServiceImpl(UsersRepository usersRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+          this.usersRepository=usersRepository;
+          this.bCryptPasswordEncoder=bCryptPasswordEncoder;
+      }
+      
+      use like this -> bCryptPasswordEncoder.encode(requestBean.getPassword()) -> gonna encode the password
+      
+      @Override
+      public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        userEntity  userEntity = usersRepository.findByEmail(username);
+        if (userEntity==null) throw new UsernameNotFoundException(username);
+        return new User(userEntity.getEmail(),userEntity.getEmail(),true,true,true,true,new ArrayList<>());
+          
+      }
+}
+```
